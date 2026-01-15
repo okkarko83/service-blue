@@ -3,7 +3,7 @@ replicaCount: 1
 containerPort: 5000
 
 image:
-  repository: 637423388059.dkr.ecr.ap-southeast-1.amazonaws.com/evppf/poc-svc-blue
+  repository: ghcr.io/okkarko83/service-blue
   tag: "latest"
   pullPolicy: IfNotPresent
 
