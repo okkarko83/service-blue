@@ -11,6 +11,11 @@ image:
 fullnameOverride: "poc-svc-blue"
 
 
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
 env:
   PEER_SERVICES: "green:http://poc-svc-green,yellow:http://poc-svc-yellow"
 
