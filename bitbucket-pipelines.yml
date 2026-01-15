@@ -1,0 +1,33 @@
+image: amazon/aws-cli
+
+definitions:
+  services:
+    docker:
+      memory: 3072 # Allocate more memory to the Docker service for larger builds.
+  caches:
+    docker-layers:
+      path: /var/lib/docker # Cache Docker layers to speed up subsequent builds.
+  steps:
+    - step: &build-and-push
+        name: Build and Push Docker Image
+        services:
+          - docker
+        caches:
+          - docker-layers
+        script:
+          - export SHORT_SHA=$(echo $BITBUCKET_COMMIT | tail -c 9)
+          - echo "Current commit short SHA $SHORT_SHA"
+          - export AWS_ACCESS_KEY_ID=$NONPROD_AWS_ACCESS_KEY_ID
+          - export AWS_SECRET_ACCESS_KEY=$NONPROD_AWS_SECRET_ACCESS_KEY
+          - export AWS_DEFAULT_REGION=$AWS_REGION
+          - echo "Logging in to Staging Amazon ECR..."
+          - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $NONPROD_AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+          - docker build -t $NONPROD_ECR_REPOSITORY .
+          - docker tag $NONPROD_ECR_REPOSITORY $NONPROD_AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$NONPROD_ECR_REPOSITORY:$SHORT_SHA
+          - docker push $NONPROD_AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$NONPROD_ECR_REPOSITORY:$SHORT_SHA
+          
+
+pipelines:
+  branches:
+    'feature/**': # This glob pattern triggers the pipeline for any branch starting with 'feature/'
+      - step: *build-and-push
